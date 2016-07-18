@@ -7,6 +7,7 @@ Affiliation: University College London
 '''
 import json
 import numpy as np
+import pprint 
 
 from bs4 import BeautifulSoup
 
@@ -27,10 +28,11 @@ class b2s:
     Attributes:
         data: The raw data from the bubbl.us HTML file 
         parsed_html: A parsed version of the HTML using BeautifulSoup 
+        lut: The mapping look up table to convert the id numberings
     '''
     data = ''
     parsed_html = None
-
+    lut = None
 
     def __init__(self, file):
         ''' Loads and parses the specified HTML file. 
@@ -66,7 +68,7 @@ class b2s:
                 edge: The edge information in dictionary format.
         '''
 
-        node_target = int(connector['href'].replace("#", ""))
+        node_target = self.lut.get(connector['href'].replace("#", ""))
         description = ''
 
         title = connector['title']
@@ -116,10 +118,22 @@ class b2s:
         node_array = []
         edge_array = []
 
+        # We need to create a lookup table to convert from the ids in the HTML file to a monotonically increasing
+        # function of values.  This is because in bubbl.us, if you delete a node that id is not re-used, so we can
+        # end up with an array of ids like this: [0, 1, 4, 7, 8].  If we want to use the ids as keys for indexing 
+        # then this numbering obviously won't work.  Therefore, we create a lookup table where the key is the id
+        # value from bubbl.us and the value is the newly re-ordered ids that we can use for referencing.
+        # NOTE: The ids used in the outputs are *not* those used in the bubbl.us HTML file, they are the new 
+        #       re-ordered version.
+        self.lut = {}
+
+        for (entity, id) in zip(entities, range(0, len(entities))):
+            self.lut[entity['id']] = id
+
         # Loop over the concepts and create a node for the given concept and create edges for hierarchies or
         # links between the concepts.
         for entity in entities:
-            node_src = int(entity['id'])
+            node_src = self.lut.get(entity['id'])
 
             # Create the node for this concept
             node = {}
@@ -180,7 +194,7 @@ class b2s:
 
         # Add the node names
         for node in nodes:
-            node_names[node['id'] - 1] = node['description']
+            node_names[node['id']] = node['description']
 
         adj = np.zeros((len(nodes), len(nodes)))
 
@@ -189,8 +203,8 @@ class b2s:
 
         # Construct the edge information
         for edge in edges:
-            adj[edge['from']-1, edge['to']-1] = 1
+            adj[edge['from'], edge['to']] = 1
 
-            edge_names[edge['from']-1, edge['to']-1] = edge['description']
+            edge_names[edge['from'], edge['to']] = edge['description']
 
         return adj, node_names, edges
