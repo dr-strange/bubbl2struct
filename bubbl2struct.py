@@ -31,6 +31,7 @@ class b2s:
     data = ''
     parsed_html = None
 
+
     def __init__(self, file):
         ''' Loads and parses the specified HTML file. 
 
@@ -48,6 +49,7 @@ class b2s:
 
         self.data = data
         self.parsed_html = parsed_html
+
 
     def create_edge(self, connector, node_src, incoming=True):
         ''' Creates and returns an edge from the given information.
@@ -148,6 +150,7 @@ class b2s:
 
         # Convert the dictionary to json format
         return json.dumps(output)
+
 
     def as_adj(self):
         ''' Return an adjacency matrix representation of the concept map. 
