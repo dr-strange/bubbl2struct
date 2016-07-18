@@ -86,6 +86,7 @@ class b2s:
 
         edge = {}
 
+        # Swap source and target nodes depending on whether it is an incoming or outgoing edge
         if incoming:
             edge['from'] = node_target
             edge['to'] = node_src
